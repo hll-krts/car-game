@@ -78,6 +78,8 @@ public class EngineFunctions : MonoBehaviour
     {
         float torq = 0;
 
+        localWheelRPM = wheelRPM * _currentGearRatio * differantialRatio;
+
         if (clutchEngagement <= _clutchEffectiveValue)
         {
             RPM = Mathf.Lerp(RPM, Mathf.Max(idleRPM + Random.Range(-10, 10), (redLineRPM + Random.Range(-100, 100)) * _gasPressed), Time.deltaTime * rpmLerpSpeed);
@@ -85,7 +87,6 @@ public class EngineFunctions : MonoBehaviour
         }
         else
         {
-            localWheelRPM = wheelRPM * _currentGearRatio * differantialRatio;
 
             // When it's not "Mathf.Min(localWheelRPM, redLineRPM + Random.Range(-100, 100))" it literally breaks but when it's like that 
             //it limits the rpm to wheel rpm which is lower than red line rpm and I've got no idea why
