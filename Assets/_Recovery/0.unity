@@ -77807,13 +77807,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1127862238}
   serializedVersion: 2
-  m_LocalRotation: {x: -0.0059340294, y: 0, z: 0, w: 0.9999824}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 100000, y: 100000, z: 100000}
   m_ConstrainProportionsScale: 1
   m_Children: []
   m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: -0.68, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &1128466968
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -102376,7 +102376,7 @@ Transform:
   m_GameObject: {fileID: 1482773456}
   serializedVersion: 2
   m_LocalRotation: {x: 0.012497074, y: -5.974381e-22, z: 1.0493606e-23, w: 0.9999219}
-  m_LocalPosition: {x: 73.67, y: 6.97, z: 342.625}
+  m_LocalPosition: {x: 73.67, y: 2.49, z: 342.625}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -156138,7 +156138,7 @@ Transform:
   m_GameObject: {fileID: 8604668544730487341}
   serializedVersion: 2
   m_LocalRotation: {x: 0.012497074, y: -5.974003e-22, z: 7.466339e-24, w: 0.9999219}
-  m_LocalPosition: {x: 73.67, y: 6.97, z: 342.625}
+  m_LocalPosition: {x: 73.67, y: 2.49, z: 342.625}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -166059,7 +166059,7 @@ Transform:
   m_GameObject: {fileID: 5849254198461928264}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 73.67, y: 4.97, z: 348.625}
+  m_LocalPosition: {x: 73.67, y: 0.49, z: 348.625}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -166082,15 +166082,14 @@ MonoBehaviour:
   _gravitanionalAccel: 9.8
   WheelRadius: 0.33
   WheelWidth: 1
-  RollingResCoefficient: 0.1
-  BrakeForce: 8000
+  RollingResCoefficient: 0.01
+  BrakeForce: 4000
   FrontSpringStiffness: 30000
   RearSpringStiffness: 30000
   RestLength: 0.6
   SpringTravel: 0.25
   DamperStiffness: 8000
   WillRenderMesh: 1
-  desiredSpeedAt1st: 25
   airDensity: 1.225
   carAerodynamicCoefficient: 0.5
   areaFrontal: 1.96
@@ -166138,12 +166137,12 @@ MonoBehaviour:
   peakEnginePower: 360
   peakEnginePowerRPM: 5600
   rpmLerpSpeed: 3
-  maxRPM: 7000
+  maxRPM: 11000
   redLineRPM: 6400
   idleRPM: 800
   increaseGearRPM: 0
   decreaseGearRPM: 0
-  changeGearTime: 0.3
+  changeGearTime: 1
   _clutchEffectiveValue: 0.3
   _clutchEngagementTime: 1
   gearRatios:
@@ -166154,12 +166153,12 @@ MonoBehaviour:
   _currentGearRatio: 0
   reverseGearRatio: -2.32
   differantialRatio: 4.3
-  rpmToTorque:
+  rpmToHP:
     serializedVersion: 2
     m_Curve:
     - serializedVersion: 3
       time: 0
-      value: 0.3
+      value: 0.8
       inSlope: 0
       outSlope: 0
       tangentMode: 136
@@ -166167,7 +166166,7 @@ MonoBehaviour:
       inWeight: 0.33333334
       outWeight: 0.33333334
     - serializedVersion: 3
-      time: 0.4
+      time: 5000
       value: 1
       inSlope: 0
       outSlope: 0
@@ -166176,8 +166175,41 @@ MonoBehaviour:
       inWeight: 0.33333334
       outWeight: 0.33333334
     - serializedVersion: 3
-      time: 1
-      value: 0.5
+      time: 6400
+      value: 0.9
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 136
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  rpmToTorque:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0.6
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 136
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 4500
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 136
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 6400
+      value: 0.8
       inSlope: 0
       outSlope: 0
       tangentMode: 136
@@ -166190,7 +166222,6 @@ MonoBehaviour:
   _gasPressed: 0
   wheelRPM: 0
   localWheelRPM: 0
-  revLimiterActive: 0
   clutchEngagement: 0
 --- !u!4 &6756648638930042685
 Transform:

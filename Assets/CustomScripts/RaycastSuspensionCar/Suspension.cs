@@ -45,8 +45,6 @@ public class Suspension : MonoBehaviour
     #region Tire stuff
     [Space(10)]
     [Header("Tire Settings")]
-    public float _axleWidth;
-
     public float rollingResistanceCoefficient;
 
     public bool willRenderMesh = true;
@@ -64,7 +62,8 @@ public class Suspension : MonoBehaviour
     private float staticFriction = 0, dynamicFriction = 0;
     private float _dynamicFrictionForceValue;
     private float _staticFrictionForceValue;
-    private float forceToAddFromTorque; Vector3 wheelToGroundContactPos;
+    private float forceToAddFromTorque; 
+    private Vector3 wheelToGroundContactPos;
     private Vector3 _RollResForce;
 
     void Start()
@@ -83,7 +82,7 @@ public class Suspension : MonoBehaviour
 
         wheelRPM = 60 * _wheelVelocityLocal.z / (2 * Mathf.PI * wheelRadius);
 
-        forceToAddFromTorque = forwardInputTorque * _axleWidth;
+        forceToAddFromTorque = forwardInputTorque;
         if (willReceiveTorque)
         {
             if (Mathf.Abs(forwardInputTorque) > 0)
@@ -141,7 +140,8 @@ public class Suspension : MonoBehaviour
 
             float netForce = (springForce - damperForce);
 
-            float angle = Vector3.Angle(this.transform.up.normalized, hit.collider.transform.up.normalized);
+            float angle = Vector3.Angle(this.transform.up, Vector3.up);
+            Debug.Log(angle);
             _normalForceValue = (rb.mass / 4f) * _gravitanionalForce * Mathf.Cos(angle * Mathf.Deg2Rad);
 
             _wheelVelocityLocal = transform.InverseTransformDirection(rb.GetPointVelocity(hit.point));
@@ -206,7 +206,7 @@ public class Suspension : MonoBehaviour
     public void Braking(float brakeForce)
     {
         //this works fine for now except if you turn the wheels while braking
-        if (Mathf.Abs(_wheelVelocityLocal.z) < .5f)
+        if (Mathf.Abs(_wheelVelocityLocal.z) < 1f)
         {
             rb.AddForceAtPosition(transform.forward * -1 * _wheelVelocityLocal.z * brakeForce, _wheel.transform.position); 
         }
@@ -217,7 +217,7 @@ public class Suspension : MonoBehaviour
     }
     public void Handbrake()
     {
-        if (Mathf.Abs(_wheelVelocityLocal.z) < .5f)
+        if (Mathf.Abs(_wheelVelocityLocal.z) < 1f)
         {
             rb.AddForceAtPosition(transform.forward * -1 * _wheelVelocityLocal.z * staticFriction, _wheel.transform.position);
         }

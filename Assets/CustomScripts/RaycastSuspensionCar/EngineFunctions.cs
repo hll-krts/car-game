@@ -6,6 +6,7 @@ using System.Collections;
 public enum GearState
 {
     Running,
+    Neutral,
     CheckingChange,
     Changing
 }
@@ -24,6 +25,7 @@ public class EngineFunctions : MonoBehaviour
     [Header("User Assigned Specs")]
     [Tooltip("in HP")]
     public float peakEnginePower; // in hp
+    public float peakEnginePowerRPM;
     [Space(10)]
     public float rpmLerpSpeed;
     public float maxRPM;
@@ -40,7 +42,6 @@ public class EngineFunctions : MonoBehaviour
     public float reverseGearRatio;
     public float differantialRatio;
     [Space(10)]
-    public AnimationCurve rpmToHP;
     public AnimationCurve rpmToTorque;
 
     [Space(20)]
@@ -48,19 +49,29 @@ public class EngineFunctions : MonoBehaviour
     public float _gasPressed;
     public float wheelRPM;
     public float localWheelRPM;
+    public int revLimiterActive;
     public float clutchEngagement; // 0 = Disengaged, 1 = Engaged
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
+        gear = 0;
         _currentGearRatio = gearRatios[gear];
-        _gearState = GearState.Changing;
     }
 
     // Update is called once per frame
     void Update()
     {
         currentTorque = CalculateTorque();
+
+        if(localWheelRPM >= redLineRPM + Random.Range(-100, 100))
+        {
+            revLimiterActive = 0;
+        }
+        else
+        {
+            revLimiterActive = 1;
+        }
     }
 
     public void ClutchEngaged()
@@ -76,29 +87,23 @@ public class EngineFunctions : MonoBehaviour
 
     float CalculateTorque()
     {
-        float torq = 0;
+        int torq = 0;
 
-        localWheelRPM = wheelRPM * _currentGearRatio * differantialRatio;
+        localWheelRPM = Mathf.Abs(wheelRPM * _currentGearRatio * differantialRatio);
 
-        if (clutchEngagement <= _clutchEffectiveValue)
+        if (clutchEngagement <= _clutchEffectiveValue || _gearState == GearState.Neutral)
         {
             RPM = Mathf.Lerp(RPM, Mathf.Max(idleRPM + Random.Range(-10, 10), (redLineRPM + Random.Range(-100, 100)) * _gasPressed), Time.deltaTime * rpmLerpSpeed);
             torq = 0;
         }
         else
         {
+            RPM = Mathf.Lerp(RPM, localWheelRPM, Time.deltaTime * rpmLerpSpeed);
 
-            // When it's not "Mathf.Min(localWheelRPM, redLineRPM + Random.Range(-100, 100))" it literally breaks but when it's like that 
-            //it limits the rpm to wheel rpm which is lower than red line rpm and I've got no idea why
-            //THAT WAS BECAUSE OF SUSPENSION SCRIPT GO CHECK THAT SHIT OUT
+            float peakEngineTorque = peakEnginePower * 7127 / peakEnginePowerRPM;
 
-            //NEED TO CHANGE THIS INTO SOMETHING MORE REALISTIC!! THE CAR DOESN'T USE IDLERPM ALL THE TIME WHEN WHEEL RPM IS LOWER!!!
-            RPM = Mathf.Lerp(RPM, Mathf.Max(idleRPM, Mathf.Min(localWheelRPM, redLineRPM + Random.Range(-100, 100))), Time.deltaTime * rpmLerpSpeed);
-
-            currentEnginePower = rpmToHP.Evaluate(RPM / maxRPM) * peakEnginePower;
-
-            torq = rpmToTorque.Evaluate(RPM / maxRPM) * (currentEnginePower / RPM) 
-                * 721.4f * clutchEngagement * _currentGearRatio * differantialRatio;
+            torq = revLimiterActive * Mathf.FloorToInt(rpmToTorque.Evaluate(RPM/maxRPM) * peakEngineTorque * _currentGearRatio * differantialRatio);
+            //torq = rpmToTorque.Evaluate(RPM) * peakEngineTorque * clutchEngagement * _currentGearRatio * differentialRatio;
         }
         return torq;
     }
@@ -111,14 +116,20 @@ public class EngineFunctions : MonoBehaviour
     {
         StartCoroutine(DecreaseGearRoutine());
     }
+    public void NeutralGear()
+    {
+        StartCoroutine(NeutralGearRoutine());
+    }
+    public void RunningGear()
+    {
+        StartCoroutine(RunningGearRoutine());
+    }
 
     IEnumerator IncreaseGearRoutine()
     {
         _gearState = GearState.CheckingChange;
         if (gear < gearRatios.Length - 1)
         {
-            //increase the gear
-            //yield return new WaitForSeconds(0.7f);
             ClutchDisengaged();
             gear++;
             yield return new WaitForSeconds(changeGearTime);
@@ -135,8 +146,6 @@ public class EngineFunctions : MonoBehaviour
         _gearState = GearState.CheckingChange;
         if (gear > 0)
         {
-            //increase the gear
-            //yield return new WaitForSeconds(0.7f);
             ClutchDisengaged();
             gear--;
             yield return new WaitForSeconds(changeGearTime);
@@ -156,5 +165,21 @@ public class EngineFunctions : MonoBehaviour
         {
             yield break;
         }
+    }
+    IEnumerator NeutralGearRoutine()
+    {
+        _gearState = GearState.CheckingChange;
+        ClutchDisengaged();
+        yield return new WaitForSeconds(changeGearTime);
+        _gearState = GearState.Neutral;
+        yield break;
+    }
+    IEnumerator RunningGearRoutine()
+    {
+        _gearState = GearState.CheckingChange;
+        yield return new WaitForSeconds(changeGearTime);
+        _currentGearRatio = gearRatios[gear];
+        ClutchEngaged();
+        yield break;
     }
 }

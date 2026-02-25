@@ -26,6 +26,8 @@ public class RayCastCarController : MonoBehaviour
     public float DamperStiffness;
     public bool WillRenderMesh;
     [Space(5)]
+    [Tooltip("In m/s and not km/h")]
+    public float desiredSpeedAt1st;
     public float airDensity;
     public float carAerodynamicCoefficient;
     public float areaFrontal;
@@ -36,15 +38,12 @@ public class RayCastCarController : MonoBehaviour
     public Suspension[] wheels;
 
     [Tooltip("Keep it something small, like .1")]
-    public float axleWidth;
     [SerializeField] private float wheelbase;
     [SerializeField] private float reartrack;
     [SerializeField] private float turnRadius;
 
     [Space(10)]
     [Header("Steering")]
-
-    public AnimationCurve steeringCurve;
     [SerializeField] private float ackermanLeft;
     [SerializeField] private float ackermanRight;
     [SerializeField] private float steeringinput;
@@ -60,6 +59,7 @@ public class RayCastCarController : MonoBehaviour
     [Space(10)]
     [Header("Moving the car")]
     public float carSpeed;
+    public float driveWheelVelocity;
     [SerializeField] private float gasPressed;
     [SerializeField] private float brakePressed;
     [SerializeField] private bool handbrakePressed;
@@ -70,6 +70,7 @@ public class RayCastCarController : MonoBehaviour
     private float leftFrontVelocity = 0, rightFrontVelocity = 0, leftRearVelocity = 0, rightRearVelocity = 0;
     private float leftFrontRPM = 0, rightFrontRPM = 0, leftRearRPM = 0, rightRearRPM = 0;
 
+    private Vector3 averageWheelForce, rightFrontForwardForce, rightRearForwardForce, leftFrontForwardForce, leftRearForwardForce;
 
     private void Start()
     {
@@ -98,7 +99,11 @@ public class RayCastCarController : MonoBehaviour
         engineFunctions._gasPressed = Mathf.Abs(forwardButtonsPressed);
         motorTorque = engineFunctions.currentTorque * forwardButtonsPressed;
 
-        engineFunctions.ClutchEngaged();
+        if(engineFunctions._gearState == GearState.Running)
+        {
+            engineFunctions.ClutchEngaged();
+        }
+
         #endregion
 
         #region Ackerman Steering Calculation
@@ -132,7 +137,6 @@ public class RayCastCarController : MonoBehaviour
 
             suspension._gravitanionalForce = _gravitanionalAccel;
             suspension.rollingResistanceCoefficient = RollingResCoefficient;
-            suspension._axleWidth = axleWidth;
 
             suspension.willRenderMesh = WillRenderMesh;
             #endregion
@@ -145,24 +149,28 @@ public class RayCastCarController : MonoBehaviour
             if (suspension.frontLeft) // sol ön
             {
                 suspension.springStiffness = FrontSpringStiffness;
-                suspension.steeringAngle = ackermanLeft * steeringCurve.Evaluate(carSpeed/100f);
+                suspension.steeringAngle = ackermanLeft;
                 suspension.steeringSpeed = steeringSpeed;
 
                 suspension.Braking(brakingStrength);
 
                 leftFrontVelocity = suspension._wheelVelocityLocal.z;
                 leftFrontRPM = suspension.wheelRPM;
+
+                leftFrontForwardForce = suspension.forceForward;
             }
             else if (suspension.frontRight) // sað ön
             {
                 suspension.springStiffness = FrontSpringStiffness;
-                suspension.steeringAngle = ackermanRight * steeringCurve.Evaluate(carSpeed / 100f);
+                suspension.steeringAngle = ackermanRight;
                 suspension.steeringSpeed = steeringSpeed;
 
                 suspension.Braking(brakingStrength);
 
                 rightFrontVelocity = suspension._wheelVelocityLocal.z;
                 rightFrontRPM = suspension.wheelRPM;
+
+                rightFrontForwardForce = suspension.forceForward;
             }
             else if (suspension.rearLeft) // sol arka
             {
@@ -175,6 +183,8 @@ public class RayCastCarController : MonoBehaviour
 
                 leftRearVelocity = suspension._wheelVelocityLocal.z;
                 leftRearRPM = suspension.wheelRPM;
+
+                leftRearForwardForce = suspension.forceForward;
             }
             else if (suspension.rearRight) // sað arka
             {
@@ -187,17 +197,18 @@ public class RayCastCarController : MonoBehaviour
 
                 rightRearVelocity = suspension._wheelVelocityLocal.z;
                 rightRearRPM = suspension.wheelRPM;
+
+                rightRearForwardForce = suspension.forceForward;
             }
             #endregion
         }
-
-        carSpeed = ((rightFrontVelocity + leftFrontVelocity) / 2f) * (36f / 10f);
-        //Debug.Log($"Car Speed: {carSpeed}, left front: {leftFrontVelocity}, right front: {rightFrontVelocity}, left rear: {leftRearVelocity}, right reat: {rightRearVelocity}");
+        carSpeed = driveWheelVelocity * (36f / 10f);
     }
     private void FixedUpdate()
     {
         #region Air drag
-        airDragForce = transform.forward * -1 * (.5f * carAerodynamicCoefficient * airDensity * areaFrontal * (carSpeed * carSpeed));
+        airDragForce = transform.forward * -1 * (.5f * carAerodynamicCoefficient * airDensity * areaFrontal 
+            * (driveWheelVelocity * driveWheelVelocity));
         rb.AddForceAtPosition(airDragForce, transform.position);
         #endregion
     }
@@ -207,7 +218,10 @@ public class RayCastCarController : MonoBehaviour
         switch (driveType)
         {
             case RayCastCarController.DriveType.FWD:
+                driveWheelVelocity = (leftFrontVelocity + rightFrontVelocity) / 2;
                 engineFunctions.wheelRPM = ((leftFrontRPM + rightFrontRPM) / 2);
+
+                averageWheelForce = (leftFrontForwardForce + rightFrontForwardForce) / 2;
 
                 if (suspension.frontLeft || suspension.frontRight)
                 {
@@ -221,7 +235,10 @@ public class RayCastCarController : MonoBehaviour
                 }
                 break;
             case RayCastCarController.DriveType.RWD:
+                driveWheelVelocity = (leftRearVelocity + rightRearVelocity) / 2;
                 engineFunctions.wheelRPM = ((leftRearRPM + rightRearRPM) / 2);
+
+                averageWheelForce = (leftRearForwardForce + rightRearForwardForce) / 2;
 
                 if (suspension.rearLeft || suspension.rearRight)
                 {
@@ -235,7 +252,10 @@ public class RayCastCarController : MonoBehaviour
                 }
                 break;
             case RayCastCarController.DriveType.AWD:
+                driveWheelVelocity = (leftFrontVelocity + rightFrontVelocity + leftRearVelocity + rightRearVelocity) / 4;
                 engineFunctions.wheelRPM = ((leftFrontRPM + rightFrontRPM + leftRearRPM + rightRearRPM) / 4);
+
+                averageWheelForce = (leftFrontForwardForce + rightFrontForwardForce + leftRearForwardForce + rightRearForwardForce) / 4;
 
                 suspension.willReceiveTorque = true;
                 suspension.forwardInputTorque = motorTorque;
