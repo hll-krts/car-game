@@ -1,6 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
 public class CheckpointSingle : MonoBehaviour
 {
@@ -20,11 +18,10 @@ public class CheckpointSingle : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        CarStatisticsClass carTransform = other.GetComponentInParent<CarStatisticsClass>();
+        RayCastCarController carTransform = other.GetComponentInParent<RayCastCarController>();
 
         if (carTransform != null)
         {
-            //Debug.Log("Checkpoint reached by car: " + carTransform.name);
             trackCheckpoints.CarThroughCheckpoint(this, carTransform.gameObject.transform);
         }
     }

@@ -1,6 +1,4 @@
 using System;
-using Unity.Android.Gradle.Manifest;
-using Unity.VisualScripting;
 using UnityEngine;
 
 public class Suspension : MonoBehaviour
@@ -18,6 +16,7 @@ public class Suspension : MonoBehaviour
     public bool rearLeft;
     public bool rearRight;
     public bool willReceiveTorque;
+    public float gripPercentage;
 
     #region Suspension stuff
     [Space(10)]
@@ -25,7 +24,7 @@ public class Suspension : MonoBehaviour
     public float springStiffness = 1f;
     public float restLength = .6f;
     public float springTravel = .3f;
-    public float wheelRadius = .01f; // DON'T FORGET TO SET THIS IN THE EDITOR YOU DIPSHIT
+    public float wheelRadius = .33f; // DON'T FORGET TO SET THIS IN THE EDITOR YOU DIPSHIT
 
     public float damperStiffness;
 
@@ -37,18 +36,18 @@ public class Suspension : MonoBehaviour
     private float _normalForceValue;
     #endregion
 
-    private bool isGrounded;
+    public bool isGrounded;
 
     private float suspensionLength;
     private float maxSuspL;
 
-    #region Tire stuff
+    #region Tire Movement stuff
     [Space(10)]
     [Header("Tire Settings")]
     public float rollingResistanceCoefficient;
 
     public bool willRenderMesh = true;
-        public Vector3 _wheelVelocityLocal;
+    public Vector3 _wheelVelocityLocal;
     public float wheelRPM = 0;
     private float angularVelocity;
     #endregion
@@ -57,19 +56,24 @@ public class Suspension : MonoBehaviour
 
     [HideInInspector] public Vector3 actualForce = Vector3.zero, forceSide = Vector3.zero, forceUp = Vector3.zero, forceForward = Vector3.zero;
     [HideInInspector] public float forwardInputTorque;
-    [HideInInspector] public bool isSlippingForwards;
+    [HideInInspector] public bool isSlipping;
+    [HideInInspector] public TrailRenderer _trailRenderer;
+    [HideInInspector] public ParticleSystem _smokes;
 
     private float staticFriction = 0, dynamicFriction = 0;
     private float _dynamicFrictionForceValue;
     private float _staticFrictionForceValue;
-    private float forceToAddFromTorque; 
+    private float forceToAddFromTorque;
     private Vector3 wheelToGroundContactPos;
     private Vector3 _RollResForce;
 
     void Start()
     {
         rb = transform.root.GetComponent<Rigidbody>();
-        _wheelMeshRenderer = _wheel.GetComponent<MeshRenderer>();
+        _wheelMeshRenderer = GetComponentInChildren<MeshRenderer>();
+        _wheel = _wheelMeshRenderer.gameObject;
+        _trailRenderer = GetComponentInChildren<TrailRenderer>();
+        _smokes = GetComponentInChildren<ParticleSystem>();
     }
 
     private void Update()
@@ -100,13 +104,14 @@ public class Suspension : MonoBehaviour
 
     private void FixedUpdate()
     {
-        //braking causes front wheels to move the opposite way too strong
-        if (_forceSidewards < staticFriction * _normalForceValue)
+        if (Mathf.Abs(_forceSidewards) < staticFriction * _normalForceValue * gripPercentage)
         {
+            isSlipping = false;
             _forceSidewards = _wheelVelocityLocal.x * staticFriction * _normalForceValue;
         }
         else
         {
+            isSlipping = true;
             _forceSidewards = Mathf.Sign(_wheelVelocityLocal.x) * dynamicFriction * _normalForceValue;
         }
 
@@ -117,7 +122,7 @@ public class Suspension : MonoBehaviour
     {
         if (_wheelVelocityLocal.z > -1 && _wheelVelocityLocal.z < 1)
         {
-            _RollResForce = (-transform.forward * _wheelVelocityLocal.z) * (_normalForceValue * rollingResistanceCoefficient); 
+            _RollResForce = (-transform.forward * _wheelVelocityLocal.z) * (_normalForceValue * rollingResistanceCoefficient);
         }
         else
         {
@@ -140,8 +145,7 @@ public class Suspension : MonoBehaviour
 
             float netForce = (springForce - damperForce);
 
-            float angle = Vector3.Angle(this.transform.up, Vector3.up);
-            Debug.Log(angle);
+            float angle = Vector3.Angle(hit.transform.up, Vector3.up);
             _normalForceValue = (rb.mass / 4f) * _gravitanionalForce * Mathf.Cos(angle * Mathf.Deg2Rad);
 
             _wheelVelocityLocal = transform.InverseTransformDirection(rb.GetPointVelocity(hit.point));
@@ -159,6 +163,7 @@ public class Suspension : MonoBehaviour
             rb.AddForceAtPosition(actualForce + _RollResForce, _wheel.transform.position);
 
             OnGround();
+            Vfx(isSlipping);
         }
         else
         {
@@ -171,10 +176,10 @@ public class Suspension : MonoBehaviour
     {
         isGrounded = true;
 
-        if (isSlippingForwards)
+        if (isSlipping)
         {
             _wheel.transform.rotation *=
-                Quaternion.Euler(Vector3.right * (angularVelocity / (2 * Mathf.PI * wheelRadius)) * 360 * Time.fixedDeltaTime); 
+                Quaternion.Euler(Vector3.right * (angularVelocity / (2 * Mathf.PI * wheelRadius)) * 360 * Time.fixedDeltaTime);
         }
         else
         {
@@ -194,12 +199,12 @@ public class Suspension : MonoBehaviour
         if (Mathf.Abs(forceToAddFromTorque) <= _staticFrictionForceValue)
         {
             _forceForwards = forceToAddFromTorque;
-            isSlippingForwards = false;
+            isSlipping = false;
         }
         else
         {
             _forceForwards = Mathf.Sign(forceToAddFromTorque) * _dynamicFrictionForceValue;
-            isSlippingForwards = true;
+            isSlipping = true;
         }
     }
 
@@ -208,25 +213,39 @@ public class Suspension : MonoBehaviour
         //this works fine for now except if you turn the wheels while braking
         if (Mathf.Abs(_wheelVelocityLocal.z) < 1f)
         {
-            rb.AddForceAtPosition(transform.forward * -1 * _wheelVelocityLocal.z * brakeForce, _wheel.transform.position); 
+            _forceForwards = forceToAddFromTorque - (_wheelVelocityLocal.z * brakeForce);
         }
         else
         {
-            rb.AddForceAtPosition(transform.forward * -1 * Mathf.Sign(_wheelVelocityLocal.z) * brakeForce, _wheel.transform.position); 
+            _forceForwards = forceToAddFromTorque - (Mathf.Sign(_wheelVelocityLocal.z) * brakeForce);
         }
     }
-    public void Handbrake()
+    public void Handbrake(float handbrakepower)
     {
         if (Mathf.Abs(_wheelVelocityLocal.z) < 1f)
         {
-            rb.AddForceAtPosition(transform.forward * -1 * _wheelVelocityLocal.z * staticFriction, _wheel.transform.position);
+            _forceForwards = forceToAddFromTorque - (_wheelVelocityLocal.z * handbrakepower);
         }
         else
         {
-            rb.AddForceAtPosition(transform.forward * -1 * Mathf.Sign(_wheelVelocityLocal.z) * dynamicFriction, _wheel.transform.position);
+            _forceForwards = forceToAddFromTorque - handbrakepower;
         }
-        _wheel.transform.rotation *=
-            Quaternion.Euler(Vector3.right * 0 * Time.fixedDeltaTime);
+    }
+
+    void Vfx(bool toggle)
+    {
+        _trailRenderer.emitting = toggle;
+        if (toggle)
+        {
+            if (!_smokes.isPlaying)
+            {
+                _smokes.Play();
+            }
+        }
+        else
+        {
+            _smokes.Stop();
+        }
     }
 
     //Don't need gizmos anymore

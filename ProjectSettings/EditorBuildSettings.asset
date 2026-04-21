@@ -6,6 +6,9 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
+    path: Assets/Scenes/MainMenu.unity
+    guid: 6e62302f6ddf70d4284fe96374f8856b
+  - enabled: 1
     path: Assets/Scenes/DemoRaceTrack.unity
     guid: f517fb22eb85f964f9ccfb06ae1ba8f7
   m_configObjects:

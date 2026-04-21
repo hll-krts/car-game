@@ -13,7 +13,7 @@ public class CustomTimeManager : MonoBehaviour
     private static int _BestMinutes = 0, _BestSeconds = 0;
     private static float _BestMilliseconds = 0;
 
-    private bool testBool;
+    private bool timerStarted;
 
     [SerializeField] private TextMeshProUGUI MinuteText, SecondsText, MilliText;
     [SerializeField] private TextMeshProUGUI LastMinuteText, LastSecondsText, LastMilliText;
@@ -29,7 +29,7 @@ public class CustomTimeManager : MonoBehaviour
 
     private void Update()
     {
-        if (testBool == true)
+        if (timerStarted == true)
         {
             Milliseconds += Time.deltaTime * 100;
             if (Milliseconds >= 100)
@@ -112,13 +112,11 @@ public class CustomTimeManager : MonoBehaviour
 
     public void StartTimer()
     {
-        testBool = true;
-        Debug.Log("Timer Started");
+        timerStarted = true;
     }
     public void StopTimer()
     {
-        testBool = false;
+        timerStarted = false;
         CheckLapTime();
-        Debug.Log("Timer Stopped");
     }
 }

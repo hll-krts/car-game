@@ -1,0 +1,36 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 947a6fd72f6d4d64a8a0e5b4339fe817, type: 3}
+  m_Name: CarStatistics_0_Prometheus
+  m_EditorClassIdentifier: Assembly-CSharp::CarStatistics
+  carID: 0
+  carPrefab: {fileID: 5485624128068465627, guid: 844dc7335c2d0dd40b5a038910c3560b, type: 3}
+  WheelRadius: 0.33
+  WheelWidth: 1
+  BrakeForce: 8000
+  handbrakepower: 20000
+  frontGripPercentage: 0.7
+  rearGripPercentage: 0.5
+  FrontSpringStiffness: 10000
+  RearSpringStiffness: 10000
+  RollingResCoefficient: 0.1
+  RestLength: 0.6
+  SpringTravel: 0.25
+  DamperStiffness: 8000
+  areaFrontal: 1.96
+  carAerodynamicCoefficient: 0.5
+  _engineSound: {fileID: 8300000, guid: 771ce407ce807b74885ec23ebd1e6647, type: 3}
+  _tireScreech: {fileID: 8300000, guid: f632e2ace80a32e47a2c531f64901a50, type: 3}
+  wheelbase: 2.74
+  reartrack: 1.486
+  turnRadius: 11.46
+  steeringSpeed: 5

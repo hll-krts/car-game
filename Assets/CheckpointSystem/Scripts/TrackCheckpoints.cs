@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 
@@ -8,13 +6,11 @@ public class TrackCheckpoints : MonoBehaviour
 {
     [SerializeField] private CustomTimeManager timeManager;
 
-    public int maxLaps; [SerializeField] private int currentLaps;
+    public int maxLaps; 
+    [SerializeField] private int currentLaps;
     public bool isRacing = true;
 
-    public event EventHandler OnPlayerCorrectCheckpoint;
-    public event EventHandler OnPlayerWrongCheckpoint;
-
-    [SerializeField] private List<Transform> carTransformList;
+    public List<Transform> carTransformList;
 
     private List<CheckpointSingle> checkpointSingleList;
     private List<int> nextCheckpointSingleIndexList;
@@ -22,7 +18,7 @@ public class TrackCheckpoints : MonoBehaviour
 
     [SerializeField] private TextMeshProUGUI CurrentLapText, MaxLapsText;
 
-    private void Awake()
+    private void Start()
     {
         currentLaps = 1;
         MaxLapsText.text = "" + maxLaps;
@@ -75,7 +71,6 @@ public class TrackCheckpoints : MonoBehaviour
             if (_checkPointIndex == nextCheckpointSingleIndex)
             {
                 // Correct checkpoint
-                //Debug.Log("Correct");
                 CheckpointSingle correctCheckpointSingle = checkpointSingleList[nextCheckpointSingleIndex];
                 //correctCheckpointSingle.Hide();
                 correctCheckpointSingle.gameObject.SetActive(false);
@@ -106,7 +101,6 @@ public class TrackCheckpoints : MonoBehaviour
             //else
             //{
             //    // Wrong checkpoint
-            //    Debug.Log("Wrong");
             //    //OnPlayerWrongCheckpoint?.Invoke(this, EventArgs.Empty);
 
             //    CheckpointSingle correctCheckpointSingle = checkpointSingleList[nextCheckpointSingleIndex];

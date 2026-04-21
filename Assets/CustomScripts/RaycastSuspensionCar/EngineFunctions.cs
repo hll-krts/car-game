@@ -1,6 +1,6 @@
 using UnityEngine;
-using TMPro;
 using System.Collections;
+using Random = UnityEngine.Random;
 
 [HideInInspector]
 public enum GearState
@@ -23,6 +23,8 @@ public class EngineFunctions : MonoBehaviour
 
     [Space(20)]
     [Header("User Assigned Specs")]
+    [Space(10)]
+    public AnimationCurve rpmToTorque;
     [Tooltip("in HP")]
     public float peakEnginePower; // in hp
     public float peakEnginePowerRPM;
@@ -31,6 +33,7 @@ public class EngineFunctions : MonoBehaviour
     public float maxRPM;
     public float redLineRPM;
     public float idleRPM;
+    public float rpmToMaxRpmRatio;
     public float increaseGearRPM;
     public float decreaseGearRPM;
     [Space(10)]
@@ -41,8 +44,6 @@ public class EngineFunctions : MonoBehaviour
     public float _currentGearRatio;
     public float reverseGearRatio;
     public float differantialRatio;
-    [Space(10)]
-    public AnimationCurve rpmToTorque;
 
     [Space(20)]
     [Header("Other Script Assigned Specs")]
@@ -64,7 +65,7 @@ public class EngineFunctions : MonoBehaviour
     {
         currentTorque = CalculateTorque();
 
-        if(localWheelRPM >= redLineRPM + Random.Range(-100, 100))
+        if (localWheelRPM >= redLineRPM + Random.Range(-100, 100))
         {
             revLimiterActive = 0;
         }
@@ -82,7 +83,7 @@ public class EngineFunctions : MonoBehaviour
     public void ClutchDisengaged()
     {
         clutchEngagement = 0;
-        _gearState = GearState.Changing;
+        _gearState = GearState.Neutral;
     }
 
     float CalculateTorque()
@@ -90,6 +91,7 @@ public class EngineFunctions : MonoBehaviour
         int torq = 0;
 
         localWheelRPM = Mathf.Abs(wheelRPM * _currentGearRatio * differantialRatio);
+        rpmToMaxRpmRatio = RPM / maxRPM;
 
         if (clutchEngagement <= _clutchEffectiveValue || _gearState == GearState.Neutral)
         {
@@ -101,8 +103,7 @@ public class EngineFunctions : MonoBehaviour
             RPM = Mathf.Lerp(RPM, localWheelRPM, Time.deltaTime * rpmLerpSpeed);
 
             float peakEngineTorque = peakEnginePower * 7127 / peakEnginePowerRPM;
-
-            torq = revLimiterActive * Mathf.FloorToInt(rpmToTorque.Evaluate(RPM/maxRPM) * peakEngineTorque * _currentGearRatio * differantialRatio);
+            torq = revLimiterActive * Mathf.FloorToInt(rpmToTorque.Evaluate(rpmToMaxRpmRatio) * peakEngineTorque * _currentGearRatio * differantialRatio);
             //torq = rpmToTorque.Evaluate(RPM) * peakEngineTorque * clutchEngagement * _currentGearRatio * differentialRatio;
         }
         return torq;
@@ -170,15 +171,14 @@ public class EngineFunctions : MonoBehaviour
     {
         _gearState = GearState.CheckingChange;
         ClutchDisengaged();
-        yield return new WaitForSeconds(changeGearTime);
+        yield return new WaitForSeconds(changeGearTime / 3);
         _gearState = GearState.Neutral;
         yield break;
     }
     IEnumerator RunningGearRoutine()
     {
         _gearState = GearState.CheckingChange;
-        yield return new WaitForSeconds(changeGearTime);
-        _currentGearRatio = gearRatios[gear];
+        yield return new WaitForSeconds(changeGearTime / 3);
         ClutchEngaged();
         yield break;
     }
