@@ -2,6 +2,9 @@ using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
 using System.Collections;
+using UnityEngine.SceneManagement;
+using System.IO;
+using UnityEditor;
 
 public class MainMenuController : MonoBehaviour
 {
@@ -43,7 +46,7 @@ public class MainMenuController : MonoBehaviour
         {
             CreateCarSelectionButtons();
         }
-        if (_dataObject.levelsData._scenes.Length != 0)
+        if (_dataObject.levelsData._sceneImages.Length != 0)
         {
             CreateLevelSelectionButtons(); 
         }
@@ -125,7 +128,7 @@ public class MainMenuController : MonoBehaviour
         {
             
             var item_go = Instantiate(_levelSelectionScrollViewContentPrefab);
-            _sceneName = _dataObject.levelsData._scenes[i].name;
+            _sceneName = _dataObject.levelsData._sceneImages[i].name;
             item_go.GetComponentInChildren<TextMeshProUGUI>().text = _sceneName;
             item_go.GetComponentInChildren<TextMeshProUGUI>().autoSizeTextContainer = true;
             item_go.GetComponentInChildren<TextMeshProUGUI>().fontSizeMin = .1f;
@@ -142,8 +145,15 @@ public class MainMenuController : MonoBehaviour
     }
     private void CallSelectScene(int i)
     {
-        _levelImage.texture = _dataObject.levelsData._sceneImages[i];
-        _dataObject.SelectLevel(_sceneName);
+        if (File.Exists("Assets/Scenes/"+_sceneName+".unity"))
+        {
+            _levelImage.texture = _dataObject.levelsData._sceneImages[i];
+            _dataObject.SelectLevel(_sceneName); 
+        }
+        else
+        {
+            Debug.Log(AssetDatabase.GetAssetPath(_dataObject.levelsData._sceneImages[i]));
+        }
 
         if (_dataObject.selectedSceneName == _sceneName)
         {
