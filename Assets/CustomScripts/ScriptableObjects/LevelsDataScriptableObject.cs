@@ -1,5 +1,3 @@
-using UnityEditor;
-using UnityEditor.SceneManagement;
 using UnityEngine;
 
 [CreateAssetMenu(fileName = "LevelsDataScriptableObject", menuName = "Scriptable Objects/LevelsDataScriptableObject")]

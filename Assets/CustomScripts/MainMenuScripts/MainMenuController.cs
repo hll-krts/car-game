@@ -145,15 +145,8 @@ public class MainMenuController : MonoBehaviour
     }
     private void CallSelectScene(int i)
     {
-        if (File.Exists("Assets/Scenes/"+_sceneName+".unity"))
-        {
-            _levelImage.texture = _dataObject.levelsData._sceneImages[i];
-            _dataObject.SelectLevel(_sceneName); 
-        }
-        else
-        {
-            Debug.Log(AssetDatabase.GetAssetPath(_dataObject.levelsData._sceneImages[i]));
-        }
+        _levelImage.texture = _dataObject.levelsData._sceneImages[i];
+        _dataObject.SelectLevel(_sceneName);
 
         if (_dataObject.selectedSceneName == _sceneName)
         {
