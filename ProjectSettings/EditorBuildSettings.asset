@@ -6,11 +6,14 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/Scenes/MainMenu.unity
+    path: Assets/Scenes/_MainMenu.unity
     guid: 6e62302f6ddf70d4284fe96374f8856b
   - enabled: 1
-    path: Assets/Scenes/DemoRaceTrack.unity
+    path: Assets/Scenes/Levels/DemoRaceTrackNight.unity
     guid: f517fb22eb85f964f9ccfb06ae1ba8f7
+  - enabled: 1
+    path: Assets/Scenes/Levels/DemoRaceTrackDay.unity
+    guid: f87071c68d0033344beb84c2143185b7
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   m_UseUCBPForAssetBundles: 0

@@ -5,6 +5,7 @@ using System.Collections;
 using UnityEngine.SceneManagement;
 using System.IO;
 using UnityEditor;
+using UnityEngine.InputSystem.XR;
 
 public class MainMenuController : MonoBehaviour
 {
@@ -35,12 +36,14 @@ public class MainMenuController : MonoBehaviour
         _carController = FindFirstObjectByType<RayCastCarController>(FindObjectsInactive.Include);
         _dataObject = FindFirstObjectByType<DataObject>();
 
+        _carController.enabled = false;
+        _carController.isControllable = false;
+        _carController.gameObject.SetActive(false);
+
         playbutton.onClick.AddListener(() =>
         {
             _dataObject.LoadScene();
         });
-
-        NotPlayable();
 
         if (_dataObject.carStatisticsDatas._carStatistics.Length != 0)
         {
@@ -69,11 +72,6 @@ public class MainMenuController : MonoBehaviour
     {
         mainMenuCanvas.SetActive(!mainMenuCanvas.activeSelf);
         selectionMenuCanvas.SetActive(!selectionMenuCanvas.activeSelf);
-    }
-
-    private void NotPlayable()
-    {
-        _carController.isControllable = false;
     }
 
     #region Car Selection
@@ -145,7 +143,7 @@ public class MainMenuController : MonoBehaviour
     }
     private void CallSelectScene(int i)
     {
-        _levelImage.texture = _dataObject.levelsData._sceneImages[i];
+        _levelImage.texture = _dataObject.levelsData._sceneImages[i+1];
         _dataObject.SelectLevel(_sceneName);
 
         if (_dataObject.selectedSceneName == _sceneName)
