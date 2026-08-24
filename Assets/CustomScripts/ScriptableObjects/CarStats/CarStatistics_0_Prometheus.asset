@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CarStatistics
   carID: 0
   carPrefab: {fileID: 5485624128068465627, guid: 844dc7335c2d0dd40b5a038910c3560b, type: 3}
-  WheelRadius: 0.33
+  WheelDiameterInInches: 12
   WheelWidth: 1
   BrakeForce: 8000
   handbrakepower: 20000

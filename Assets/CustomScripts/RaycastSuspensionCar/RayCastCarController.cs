@@ -2,6 +2,18 @@ using UnityEngine;
 
 public class RayCastCarController : MonoBehaviour
 {
+    [Space(5)]
+    #region Physics Variables
+    [Space(5)]
+    public float _gravitanionalAccel;
+    [Space(5)]
+    public float airDensity;
+    private Vector3 airDragForce;
+    [Tooltip("Keep it something small")]
+    public float stationaryMaxSpeed;
+    #endregion
+
+    [Space(5)]
     public CarStatistics carStatistics;
     private GameObject _carPrefab;
     Rigidbody rb;
@@ -10,6 +22,10 @@ public class RayCastCarController : MonoBehaviour
     public DriveType driveType = DriveType.AWD;
 
     public bool isControllable = false;
+    [SerializeField] private bool isTestingSomething = true;
+    public float testWheelDiameterInInches = 12f;
+   [SerializeField] private bool isRealisticDrag;
+
 
     #region Internal Control Variables
     [Space(20)]
@@ -33,26 +49,14 @@ public class RayCastCarController : MonoBehaviour
     public bool useTireSounds;
     #endregion
 
-    #region Physics Variables
-    [Space(5)]
-    public float _gravitanionalAccel;
-
-    [Space(5)]
-    public float airDensity;
-    private Vector3 airDragForce;
-    [Tooltip("Keep it something small")]
-    public float stationaryMaxSpeed;
-    #endregion
-
     #region Input Variables
     [Space(5)]
     public bool _manualTransmission = true;
-    private CustomDefaultActions inputActions;
+    public CustomDefaultActions inputActions;
     private float steeringinput;
     private float gasPressed;
     private float brakePressed;
     private bool handbrakePressed;
-    [HideInInspector] public bool cancelKeyPressed;
     #endregion
 
     #region Car Movement Variables
@@ -82,8 +86,8 @@ public class RayCastCarController : MonoBehaviour
     #region Variables to pull from ScriptableObject
     [Header("Variables to pull from ScriptableObject")]
     [Space(10)]
-    private float WheelRadius;
-    private float WheelWidth;
+    [SerializeField] private float wheelDiameterInMeters;
+    private float WheelWidth; //I don't think I'll use this but I'll keep it in just in case
     private float BrakeForce;
     private float handbrakepower;
     [Space(5)]
@@ -93,7 +97,7 @@ public class RayCastCarController : MonoBehaviour
     private float RearSpringStiffness;
     [Space(5)]
     [Tooltip("Keep it something small, like 0,01")]
-    private float RollingResCoefficient;
+    [SerializeField] private float RollingResCoefficient;
 
     [Space(5)]
     private GameObject centerOfMass; //LoadCart() will assign it but MAKE SURE THE CoM HAS THE PROPER TAG
@@ -103,8 +107,8 @@ public class RayCastCarController : MonoBehaviour
     [Space(5)]
     [SerializeField] private bool WillRenderMesh;
     [Space(5)]
-    private float areaFrontal;
-    private float carAerodynamicCoefficient;
+    [SerializeField] private float areaFrontal;
+    [SerializeField] private float carAerodynamicCoefficient;
 
     private float wheelbase;
     private float reartrack;
@@ -149,14 +153,15 @@ public class RayCastCarController : MonoBehaviour
                 }
             }
 
-            WheelRadius = carStatistics.WheelRadius;
+            //I have to divide it by 2 as well because diameter=çap and radius=yarýçap
+            wheelDiameterInMeters = (carStatistics.WheelDiameterInInches * 2.54f) / 100f; 
             BrakeForce = carStatistics.BrakeForce;
             handbrakepower = carStatistics.handbrakepower;
             frontGripPercentage = carStatistics.frontGripPercentage;
             rearGripPercentage = carStatistics.rearGripPercentage;
             FrontSpringStiffness = carStatistics.FrontSpringStiffness;
             RearSpringStiffness = carStatistics.RearSpringStiffness;
-            RollingResCoefficient = carStatistics.RollingResCoefficient;
+            //RollingResCoefficient = carStatistics.RollingResCoefficient;
             RestLength = carStatistics.RestLength;
             SpringTravel = carStatistics.SpringTravel;
             DamperStiffness = carStatistics.DamperStiffness;
@@ -178,6 +183,11 @@ public class RayCastCarController : MonoBehaviour
 
     private void Update()
     {
+        if (isTestingSomething)
+        {
+            wheelDiameterInMeters = (testWheelDiameterInInches * 2.54f) / 100f;
+        }
+
         Physics.gravity = new Vector3(0, -_gravitanionalAccel, 0);
 
         if (isControllable)
@@ -193,6 +203,7 @@ public class RayCastCarController : MonoBehaviour
         //Shit about wheels
         foreach (Suspension suspension in wheels)
         {
+            suspension.wheelDiameterInMeter = wheelDiameterInMeters;
             GlobalWheelVariables(suspension);
 
             if (isControllable)
@@ -266,9 +277,6 @@ public class RayCastCarController : MonoBehaviour
         }
         #endregion
 
-        inputActions.CarPlaying.Cancel.started += ctx => cancelKeyPressed = true;
-        inputActions.CarPlaying.Cancel.performed += ctx => cancelKeyPressed = false;
-
         forwardButtonsPressed = gasPressed;
         brakingStrength = brakePressed * BrakeForce;
     }
@@ -279,8 +287,15 @@ public class RayCastCarController : MonoBehaviour
     }
     private void AirDrag()
     {
-        airDragForce = transform.forward * -1 * (.5f * carAerodynamicCoefficient * airDensity * areaFrontal 
-            * (driveWheelVelocity * driveWheelVelocity));
+        if (isRealisticDrag)
+        {
+            airDragForce = transform.forward * -1 * (.5f * carAerodynamicCoefficient * airDensity * areaFrontal
+                * (driveWheelVelocity * driveWheelVelocity)); 
+        }
+        else
+        {
+            //something else
+        }
         rb.AddForceAtPosition(airDragForce, transform.position);
     }
 
@@ -373,7 +388,7 @@ public class RayCastCarController : MonoBehaviour
                 break;
             case RayCastCarController.DriveType.AWD:
                 driveWheelVelocity = (leftFrontVelocity + rightFrontVelocity + leftRearVelocity + rightRearVelocity) / 4;
-                engineFunctions.wheelRPM = ((leftFrontRPM + rightFrontRPM + leftRearRPM + rightRearRPM) / 4);
+                engineFunctions.wheelRPM = (leftFrontRPM + rightFrontRPM) / 2;
 
                 suspension.willReceiveTorque = true;
                 suspension.forwardInputTorque = motorTorque;
@@ -404,7 +419,7 @@ public class RayCastCarController : MonoBehaviour
     private void GlobalWheelVariables(Suspension suspension)
     {
         suspension.groundLayer = groundLayer;
-        suspension.wheelRadius = WheelRadius;
+        suspension.wheelDiameterInMeter = wheelDiameterInMeters;
         suspension.restLength = RestLength;
         suspension.springTravel = SpringTravel;
         suspension.damperStiffness = DamperStiffness;

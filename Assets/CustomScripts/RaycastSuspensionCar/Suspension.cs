@@ -9,6 +9,8 @@ public class Suspension : MonoBehaviour
     public GameObject _wheel;
     private MeshRenderer _wheelMeshRenderer;
     //SphereCollider _wheelCollider;
+
+    #region Wheel
     [Space(10)]
     [Header("Wheel")]
     public bool frontLeft;
@@ -17,14 +19,15 @@ public class Suspension : MonoBehaviour
     public bool rearRight;
     public bool willReceiveTorque;
     public float gripPercentage;
+    #endregion
 
-    #region Suspension stuff
+    #region Suspension
     [Space(10)]
     [Header("Suspension Settings")]
     public float springStiffness = 1f;
     public float restLength = .6f;
     public float springTravel = .3f;
-    public float wheelRadius = .33f; // DON'T FORGET TO SET THIS IN THE EDITOR YOU DIPSHIT
+    public float wheelDiameterInMeter = .33f; // DON'T FORGET TO SET THIS IN THE EDITOR YOU DIPSHIT
 
     public float damperStiffness;
 
@@ -84,9 +87,10 @@ public class Suspension : MonoBehaviour
         _wheel.transform.position = transform.position - transform.up * suspensionLength;
         _wheelMeshRenderer.enabled = willRenderMesh;
 
-        wheelRPM = 60 * _wheelVelocityLocal.z / (2 * Mathf.PI * wheelRadius);
+        wheelRPM = 60 * _wheelVelocityLocal.z / (2 * Mathf.PI * wheelDiameterInMeter / 2);
 
-        forceToAddFromTorque = forwardInputTorque;
+        //magic number because the meter in N.m is radius and not diameter
+        forceToAddFromTorque = forwardInputTorque; 
         if (willReceiveTorque)
         {
             if (Mathf.Abs(forwardInputTorque) > 0)
@@ -99,7 +103,7 @@ public class Suspension : MonoBehaviour
             }
         }
 
-        angularVelocity = MathF.Sqrt(forceToAddFromTorque / (wheelRadius * rb.mass / 4));
+        angularVelocity = MathF.Sqrt(forceToAddFromTorque / ((wheelDiameterInMeter / 2) * rb.mass / 4));
     }
 
     private void FixedUpdate()
@@ -133,7 +137,7 @@ public class Suspension : MonoBehaviour
     {
         RaycastHit hit;
         maxSuspL = restLength + springTravel;
-        if (Physics.SphereCast(transform.position, wheelRadius, -transform.up, out hit, maxSuspL, groundLayer))
+        if (Physics.SphereCast(transform.position, wheelDiameterInMeter, -transform.up, out hit, maxSuspL, groundLayer))
         {
             wheelToGroundContactPos = hit.point;
             suspensionLength = hit.distance;
@@ -179,12 +183,12 @@ public class Suspension : MonoBehaviour
         if (isSlipping)
         {
             _wheel.transform.rotation *=
-                Quaternion.Euler(Vector3.right * (angularVelocity / (2 * Mathf.PI * wheelRadius)) * 360 * Time.fixedDeltaTime);
+                Quaternion.Euler(Vector3.right * (angularVelocity / (2 * Mathf.PI * wheelDiameterInMeter/2)) * 360 * Time.fixedDeltaTime);
         }
         else
         {
             _wheel.transform.rotation *=
-                Quaternion.Euler(Vector3.right * (_wheelVelocityLocal.z / (2 * Mathf.PI * wheelRadius)) * 360 * Time.fixedDeltaTime);
+                Quaternion.Euler(Vector3.right * (_wheelVelocityLocal.z / (2 * Mathf.PI * wheelDiameterInMeter/2)) * 360 * Time.fixedDeltaTime);
         }
     }
     void NotOnGround()
@@ -259,7 +263,7 @@ public class Suspension : MonoBehaviour
         //{
         //    Gizmos.color = Color.red;
         //}
-        Gizmos.DrawWireSphere(transform.position - transform.up * suspensionLength, wheelRadius);
+        Gizmos.DrawWireSphere(transform.position - transform.up * suspensionLength, wheelDiameterInMeter);
         Gizmos.DrawSphere(wheelToGroundContactPos, .1f);
         Gizmos.color = Color.black;
         Gizmos.DrawRay(_wheel.transform.position, actualForce);

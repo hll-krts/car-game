@@ -11,7 +11,7 @@ public class CarStatistics : ScriptableObject
     public GameObject carPrefab;
 
     [Space(10)]
-    public float WheelRadius;
+    public float WheelDiameterInInches;
     public float WheelWidth;
     public float BrakeForce;
     public float handbrakepower;

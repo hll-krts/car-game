@@ -29,4 +29,8 @@ public class DataObject : MonoBehaviour
     {
         SceneManager.LoadScene(selectedSceneName);
     }
+    public void DestroyObj()
+    {
+        Destroy(this.gameObject);
+    }
 }

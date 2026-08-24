@@ -3,10 +3,11 @@ using UnityEngine;
 public class RaceLevelManager : MonoBehaviour
 {
     [SerializeField] private DataObject dataObject;
+    [SerializeField] private CustomCarUtilities carUtils;
+    [SerializeField] private RayCastCarController carController;
 
     [SerializeField] private int _NumberOfLaps;
     private TrackCheckpoints trackCheckpoints;
-    private RayCastCarController carController;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Awake()
@@ -32,5 +33,8 @@ public class RaceLevelManager : MonoBehaviour
             carController.isControllable = true;
             carController.gameObject.SetActive(true);
         }
+
+        carUtils = FindAnyObjectByType<CustomCarUtilities>(FindObjectsInactive.Include);
+        carUtils.dataobj = dataObject;
     }
 }

@@ -5,6 +5,7 @@ using System.Collections;
 using UnityEngine.SceneManagement;
 using System.IO;
 using UnityEditor;
+using UnityEngine.InputSystem.XR;
 
 public class MainMenuController : MonoBehaviour
 {
@@ -35,12 +36,14 @@ public class MainMenuController : MonoBehaviour
         _carController = FindFirstObjectByType<RayCastCarController>(FindObjectsInactive.Include);
         _dataObject = FindFirstObjectByType<DataObject>();
 
+        _carController.enabled = false;
+        _carController.isControllable = false;
+        _carController.gameObject.SetActive(false);
+
         playbutton.onClick.AddListener(() =>
         {
             _dataObject.LoadScene();
         });
-
-        NotPlayable();
 
         if (_dataObject.carStatisticsDatas._carStatistics.Length != 0)
         {
@@ -69,11 +72,6 @@ public class MainMenuController : MonoBehaviour
     {
         mainMenuCanvas.SetActive(!mainMenuCanvas.activeSelf);
         selectionMenuCanvas.SetActive(!selectionMenuCanvas.activeSelf);
-    }
-
-    private void NotPlayable()
-    {
-        _carController.isControllable = false;
     }
 
     #region Car Selection
@@ -105,13 +103,16 @@ public class MainMenuController : MonoBehaviour
     }
     IEnumerator CarLoadWaiterForDebug()
     {
+        if (_carController.gameObject.activeSelf)
+        {
+            _carController.enabled = false;
+            _carController.gameObject.SetActive(false); 
+        }
         int childno = _carController.transform.childCount;
         for (int i = 0; i < childno; i++)
         {
             Destroy(_carController.transform.GetChild(i).gameObject);
         }
-        _carController.enabled = false;
-        _carController.gameObject.SetActive(false);
         _carController.gameObject.transform.position = carShowroomSpawnTransform.position;
         _carController.gameObject.transform.rotation = carShowroomSpawnTransform.rotation;
         yield return new WaitForSeconds(.3f);

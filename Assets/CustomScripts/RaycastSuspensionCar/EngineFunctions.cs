@@ -128,9 +128,9 @@ public class EngineFunctions : MonoBehaviour
 
     IEnumerator IncreaseGearRoutine()
     {
-        _gearState = GearState.CheckingChange;
-        if (gear < gearRatios.Length - 1)
+        if (gear < gearRatios.Length)
         {
+            _gearState = GearState.CheckingChange;
             ClutchDisengaged();
             gear++;
             yield return new WaitForSeconds(changeGearTime);

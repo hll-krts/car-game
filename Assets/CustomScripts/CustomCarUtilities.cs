@@ -1,8 +1,13 @@
-using UnityEngine;
 using TMPro;
+using UnityEngine;
+using UnityEngine.Diagnostics;
+using UnityEngine.InputSystem;
 
 public class CustomCarUtilities : MonoBehaviour
 {
+    public CustomDefaultActions inputActions;
+    public DataObject dataobj;
+
     #region SPEED TEXT (UI)
     [Space(20)]
     [Header("UI")]
@@ -13,42 +18,55 @@ public class CustomCarUtilities : MonoBehaviour
     public TextMeshProUGUI carSpeedText; // Used to store the UI object that is going to show the speed of the car.
     private float carSpeed;
 
-    private RayCastCarController carController;
+    public RayCastCarController carController;
     [SerializeField] private GameObject _pauseMenu;
     #endregion
 
     private void Start()
     {
         carController = GetComponent<RayCastCarController>();
+        inputActions = carController.inputActions;
+        inputActions.CarPlaying.Cancel.Enable();
     }
     // Update is called once per frame
     void Update()
     {
         carSpeed = Mathf.Abs(carController.carSpeed);
-        CarSpeedUI();
+        if (useUI)
+        {
+            CarSpeedUI();
+        }
+
+        inputActions.CarPlaying.Cancel.performed += ctx => PauseMenu();
     }
+
+    public void PauseMenu()
+    {
+        if (!_pauseMenu.activeSelf)
+        {
+            Time.timeScale = 0f;
+            _drivingUI.SetActive(false);
+            _pauseMenu.SetActive(true);
+        }
+        else
+        {
+            Time.timeScale = Mathf.Lerp(0f, 1f, 1f);
+            _drivingUI.SetActive(true);
+            _pauseMenu.SetActive(false);
+        }
+    }
+
     // This method converts the car speed data from float to string, and then set the text of the UI carSpeedText with this value.
     public void CarSpeedUI()
     {
-        if (useUI)
-        {
-                float absoluteCarSpeed = carSpeed;
-                carSpeedText.text = Mathf.RoundToInt(absoluteCarSpeed).ToString();
-        }
+        float absoluteCarSpeed = carSpeed;
+        carSpeedText.text = Mathf.RoundToInt(absoluteCarSpeed).ToString();
 
-        if (carController.cancelKeyPressed)
-        {
-            if (!_pauseMenu.activeSelf)
-            {
-                _drivingUI.SetActive(false);
-                _pauseMenu.SetActive(true);
-            }
-            else
-            {
-                _drivingUI.SetActive(true);
-                _pauseMenu.SetActive(false);
-            }
-            //stuff
-        }
+    }
+
+    public void DestroyDataObj()
+    {
+        inputActions.CarPlaying.Disable();
+        dataobj.DestroyObj();
     }
 }
